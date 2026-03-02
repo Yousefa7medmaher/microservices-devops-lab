@@ -1,6 +1,6 @@
 [submodule "auth-service"]
 	path = auth-service
-	url = https://github.com/Yousefa7medmaher/auth-service.git
+	url = https://github.com/Yousefa7medmaher/auth-service
 [submodule "cart-service"]
 	path = cart-service
 	url = https://github.com/Yousefa7medmaher/cart-service.git
