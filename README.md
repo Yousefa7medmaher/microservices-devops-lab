@@ -176,7 +176,7 @@ minikube dashboard   # visual overview
 
 <div align="center">
 
-[![GitHub](https://img.shields.io/badge/GitHub-jooahmed-181717?style=for-the-badge&logo=github)](https://github.com/jooahmed)
-[![Docker Hub](https://img.shields.io/badge/Docker%20Hub-jooahmed-2496ED?style=for-the-badge&logo=docker&logoColor=white)](https://hub.docker.com/u/jooahmed)
+[![GitHub](https://github.com/Yousefa7medmaher)](https://github.com/Yousefa7medmaher)
+[![Docker Hub](https://hub.docker.com/repositories/yousef2005)
 
 </div>
