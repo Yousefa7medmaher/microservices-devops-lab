@@ -10,15 +10,52 @@
 
 ---
 
-## 📁 Project Structure
+## 📁 Project Structure — Multi-Repo
+
+Each service lives in its own isolated repository. There's also a dedicated repo for reusable CD workflows and one for Terraform.
 
 ```
-Microservice_Project/
-├── auth-service/
-├── cart-service/
-├── order-service/
-├── products-service/
-└── README.md
+GitHub Organization
+│
+├── auth-service/               # github.com/Yousefa7medmaher/auth-service
+│   ├── .github/workflows/
+│   │   └── CI.yaml             # Build & push to ECR + triggers CD
+│   ├── k8s/                    # K8s manifests for this service
+│   ├── src/
+│   ├── config/
+│   ├── controllers/
+│   ├── models/
+│   ├── utils/
+│   ├── Dockerfile
+│   └── docker-compose.yaml
+│
+├── products-service/           # github.com/Yousefa7medmaher/products-service
+│   ├── .github/workflows/
+│   │   └── CI.yaml
+│   ├── k8s/
+│   ├── src/  controllers/  models/  routes/  services/  test/
+│   ├── Dockerfile
+│   └── docker-compose.yml
+│
+├── cart-service/               # github.com/Yousefa7medmaher/cart-service
+│   ├── .github/workflows/
+│   │   └── CI.yaml
+│   ├── k8s/
+│   ├── src/
+│   └── Dockerfile
+│
+├── order-service/              # github.com/Yousefa7medmaher/order-service
+│   ├── .github/workflows/
+│   │   └── CI.yaml
+│   ├── k8s/
+│   ├── src/
+│   └── Dockerfile
+│
+├── reusable-workflows/         # Shared CD logic — called by all services
+│   └── .github/workflows/
+│       └── cd-deploy-eks.yml
+│
+└── terraform/                  # EKS cluster provisioning
 ```
 
 ---
@@ -39,24 +76,24 @@ Each service uses a **multistage Dockerfile** to keep production images lean and
 
 ## 🔄 CI/CD — GitHub Actions + AWS ECR + EKS
 
-Every push to `main` triggers an automated pipeline across all services.
+### CI — Per Service (each repo has its own `CI.yaml`)
 
-### CI — Build & Push to ECR
+Every push to `main` in any service repo triggers:
 
 **Lint & Test → Build → Push to Amazon ECR**
 
-- Matrix strategy runs all services in parallel
 - Docker layer caching via GitHub Actions cache (`type=gha`)
-- Images tagged with both `:latest` and the commit SHA
-- Pushes to a private ECR repository per service
+- Images tagged with the commit SHA
+- Pushes to a private ECR repository for that service
+- After a successful push, the CI calls the shared CD workflow
 
-### CD — Deploy to EKS (Reusable Workflow)
+### CD — Reusable Workflow (centralized in `reusable-workflows` repo)
 
-A reusable `workflow_call` workflow handles all deployments:
+All services share a single reusable deploy workflow via `workflow_call`. Each service's CI calls it like this:
 
 ```yaml
-# Example: calling the reusable CD workflow
-uses: ./.github/workflows/cd-deploy-eks.yml
+# Inside each service's CI.yaml — after the build/push job
+uses: Yousefa7medmaher/reusable-workflows/.github/workflows/cd-deploy-eks.yml@main
 with:
   image_tag: ${{ github.sha }}
   environment: production
@@ -71,7 +108,7 @@ secrets: inherit
 
 1. Configures AWS credentials
 2. Installs `kubectl` and updates kubeconfig via `aws eks update-kubeconfig`
-3. Replaces `IMAGE_PLACEHOLDER` in manifests with the real ECR image URI
+3. Replaces `IMAGE_PLACEHOLDER` in k8s manifests with the real ECR image URI
 4. Applies manifests with `kubectl apply -f k8s/ -n $NAMESPACE`
 5. Verifies rollout with `kubectl rollout status`
 
@@ -144,14 +181,14 @@ External Traffic
       │
       ▼
 ┌──────────────────┐
-│  AWS LoadBalancer │  ← ELB provisioned per service (production)
+│ AWS LoadBalancer │  ← ELB provisioned per service (production)
 └────────┬─────────┘
          │
          ▼
 ┌────────────────────────────────────────┐
-│           EKS Cluster (micro-app ns)    │
+│           EKS Cluster (micro-app ns)   │
 │  auth-service (x4 pods)                │
-│       └──ClusterIP──► mongo-auth        │
+│       └──ClusterIP──► mongo-auth       │
 └────────────────────────────────────────┘
 ```
 
