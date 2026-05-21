@@ -18,17 +18,6 @@ Microservice_Project/
 ├── cart-service/
 ├── order-service/
 ├── products-service/
-├── k8s/
-│   ├── deployments/
-│   ├── services/
-│   ├── configmaps/
-│   ├── secrets/
-│   ├── ingress/
-│   └── statefulsets/
-├── terraform/              # EKS cluster provisioning
-├── .github/
-│   └── workflows/          # CI/CD pipelines
-├── docker-compose.yml
 └── README.md
 ```
 
